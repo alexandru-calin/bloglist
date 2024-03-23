@@ -1,4 +1,4 @@
-const { test, after, beforeEach } = require("node:test");
+const { test, after, beforeEach, describe } = require("node:test");
 const assert = require("node:assert");
 const mongoose = require("mongoose");
 const supertest = require("supertest");
@@ -44,8 +44,28 @@ test("correct number of blogs", async () => {
 test("blog has id property", async () => {
   const response = await api.get("/api/blogs");
   for (const blog of response.body) {
-    assert.strictEqual(blog.hasOwnProperty("id"), true);
+    assert(blog.hasOwnProperty("id"));
   }
+});
+
+test("a new blog is saved correctly", async () => {
+  const newBlog = {
+    title: "async/await simplifies making async calls",
+    author: "Fullstackopen",
+    url: "https://fullstackopen.com/en/part4/testing_the_backend",
+    likes: 100,
+  }
+  await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(201)
+    .expect("Content-Type", /application\/json/);
+
+  const response = await api.get("/api/blogs");
+  const titles = response.body.map(blog => blog.title);
+
+  assert.strictEqual(response.body.length, initialBlogs.length + 1);
+  assert(titles.includes("async/await simplifies making async calls"));
 });
 
 after(async () => {
